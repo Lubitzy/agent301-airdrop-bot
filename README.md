@@ -43,7 +43,7 @@
 5. Start the application:
 
    ```
-   node index.js
+   npm start
    ```
 
 ## Usage
