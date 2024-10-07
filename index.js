@@ -18,102 +18,104 @@ const {
 const TOKEN = process.env.TOKEN;
 
 if (!TOKEN) {
-    console.error("❌ TOKEN is missing in the environment variables.".red);
+    console.error("❌ Error: TOKEN is missing in the environment variables.".red);
     process.exit(1);
 }
 
 (async () => {
     displayHeader();
-    console.log(`⏳ Please wait, fetching your info...\n`.brightCyan);
+    console.log(`⏳ Fetching your account details, please wait...\n`.cyan);
 
-    const [point, notcoin, ton, ticket] = await Promise.all([
-        getBalancePoint(TOKEN),
-        getBalanceNOT(TOKEN),
-        getBalanceTON(TOKEN),
-        getTickets(TOKEN)
-    ]);
+    try {
+        const [point, notcoin, ton, ticket] = await Promise.all([
+            getBalancePoint(TOKEN),
+            getBalanceNOT(TOKEN),
+            getBalanceTON(TOKEN),
+            getTickets(TOKEN)
+        ]);
 
-    console.log('Hello, this is your data in Agent301'.brightWhite.bold);
-    console.log(`Balance Point : ${point}`.brightCyan);
-    console.log(`NOT : ${notcoin}`.brightCyan);
-    console.log(`TON : ${ton}`.brightCyan);
-    console.log(`Ticket : ${ticket}`.brightCyan);
+        console.log('👋 Welcome! Here is your account information:'.bold.white);
+        console.log(`💰 Balance Points: ${point}`.white);
+        console.log(`🔸 NOT Coins: ${notcoin}`.white);
+        console.log(`💎 TON Coins: ${ton}`.white);
+        console.log(`🎟️  Tickets: ${ticket}\n`.white);
 
-    let choice = askUserChoice();
+        let choice = askUserChoice();
 
-    if (choice === '1') {
-        let defaultChoice = askDefaultChoice();
-        const typeResult = await getTypeTask(TOKEN);
-        if (typeResult.success) {
-            const types = typeResult.types;
-            switch (defaultChoice) {
-                case '1':
-                    console.log("Auto Daily Login Is Not Currently Available");
-                    // Tambahkan fungsi untuk auto daily login jika ada
-                    break;
-                case '2':
-                    const clearResults = await clearTasks(TOKEN, types);
-                    console.log("Auto Complete Tasks executed:");
-                    clearResults.forEach(result => {
-                        if (result.error) {
-                            console.log(`- Task ${result.type} has been completed before`);
-                        } else {
-                            console.log(`- Task ${result.type} cleared successfully.`.green);
-                        }
-                    });
-                    // Ambil balance point terbaru setelah menghapus tugas
-                    const updatedBalancePoint = await getBalancePoint(TOKEN);
-                    console.log(`Updated Balance Point: ${updatedBalancePoint}`.brightCyan);
-                    break;
-                case '3':
-                    console.log("Starting Auto Spin...");
-                    const spinResults = await autoSpin(TOKEN);
-                    console.log("Auto Spin results:");
-                    spinResults.forEach((result, index) => {
-                        console.log(`Spin ${index + 1}: ${JSON.stringify(result)}`.brightCyan);
-                    });
-                    // Ambil balance point terbaru setelah melakukan spin
-                    const updatedSpinBalance = await getBalancePoint(TOKEN);
-                    console.log(`Updated Balance Point after spins: ${updatedSpinBalance}`.brightCyan);
-                    break;
-                case '0':
-                    console.log("Returning to main menu.");
-                    break;
-                default:
-                    console.log("Invalid choice. Please try again.");
-            }
-        } else {
-            console.log(typeResult.message.red);
-        }
-    } else if (choice === '2') {
-        console.log("Clearing tasks and performing auto spin...");
-        const typeResult = await getTypeTask(TOKEN);
-        if (typeResult.success) {
-            const types = typeResult.types;
-            const clearResults = await clearTasks(TOKEN, types);
-            clearResults.forEach(result => {
-                if (result.error) {
-                    console.log(`- Task of ${result.type} has been completed before`);
-                } else {
-                    console.log(`- Task of type ${result.type} cleared successfully.`.green);
+        if (choice === '1') {
+            let defaultChoice = askDefaultChoice();
+            const typeResult = await getTypeTask(TOKEN);
+
+            if (typeResult.success) {
+                const types = typeResult.types;
+
+                switch (defaultChoice) {
+                    case '1':
+                        console.log("ℹ️ Auto Daily Login feature is not available at the moment.".yellow);
+                        // Add auto daily login functionality if available
+                        break;
+                    case '2':
+                        await clearTasks(TOKEN, types);
+                        // Fetch updated balance point after completing tasks
+                        const updatedBalancePoint = await getBalancePoint(TOKEN);
+                        console.log(`🔄 Updated Balance Points: ${updatedBalancePoint}`.brightCyan);
+                        break;
+                    case '3':
+                        console.log("🎰 Starting Auto Spin...".cyan);
+                        const spinResults = await autoSpin(TOKEN);
+                        console.log("🔄 Auto Spin results:");
+                        spinResults.forEach((result, index) => {
+                            console.log(`- Spin ${index + 1}: ${result}`.brightCyan);
+                        });
+                        // Fetch updated balance point after spins
+                        const updatedSpinBalance = await getBalancePoint(TOKEN);
+                        console.log(`🔄 Updated Balance Points after spins: ${updatedSpinBalance}`.brightCyan);
+                        break;
+                    case '0':
+                        console.log("🔙 Returning to the main menu.".cyan);
+                        break;
+                    default:
+                        console.log("⚠️ Invalid selection. Please choose a valid option.".yellow);
                 }
-            });
-            console.log("Starting Auto Spin...");
-            const spinResults = await autoSpin(TOKEN);
-            console.log("Auto Spin results:");
-            spinResults.forEach((result, index) => {
-                console.log(`Spin ${index + 1}: ${JSON.stringify(result)}`.brightCyan);
-            });
-            // Get updated balance point after spinning
-            const finalBalance = await getBalancePoint(TOKEN);
-            console.log(`Final Balance Point: ${finalBalance}`.brightCyan);
+            } else {
+                console.log(typeResult.message.red);
+            }
+        } else if (choice === '2') {
+            console.log("🧹 Clearing tasks and starting Auto Spin...".cyan);
+            const typeResult = await getTypeTask(TOKEN);
+
+            if (typeResult.success) {
+                const types = typeResult.types;
+                const clearResults = await clearTasks(TOKEN, types);
+
+                clearResults.forEach(result => {
+                    if (result.error) {
+                        console.log(`- Task '${result.type}' has already been completed.`.yellow);
+                    } else {
+                        console.log(`- Task '${result.type}' completed successfully.`.green);
+                    }
+                });
+
+                console.log("🎰 Starting Auto Spin...".cyan);
+                const spinResults = await autoSpin(TOKEN);
+                console.log("🔄 Auto Spin results:");
+                spinResults.forEach((result, index) => {
+                    console.log(`- Spin ${index + 1}: ${result}`.brightCyan);
+                });
+
+                // Fetch updated balance point after spinning
+                const finalBalance = await getBalancePoint(TOKEN);
+                console.log(`💰 Final Balance Points: ${finalBalance}`.brightCyan);
+            } else {
+                console.log(typeResult.message.red);
+            }
+        } else if (choice === '0') {
+            console.log("👋 Exiting the application. Goodbye!".green);
+            process.exit(0);
         } else {
-            console.log(typeResult.message.red);
+            console.log("⚠️ Invalid selection. Please try again.".yellow);
         }
-    } else if (choice === '0') {
-        console.log("Exiting the application.");
-        process.exit(0);
-    } else {
-        console.log("Invalid choice. Please try again.");
+    } catch (error) {
+        console.error(`❌ An error occurred: ${error.message}`.red);
     }
 })();

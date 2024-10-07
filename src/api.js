@@ -1,5 +1,6 @@
-const axios = require('axios')
-const BASE_URL = 'https://api.agent301.org/'
+const axios = require('axios');
+const chalk = require('chalk');  // Import chalk library
+const BASE_URL = 'https://api.agent301.org/';
 
 // GET USER POINT BALANCE INFO
 async function getBalancePoint(token) {
@@ -9,7 +10,7 @@ async function getBalancePoint(token) {
         headers: {
             Authorization: token
         }
-    })
+    });
     return data.result.balance;
 }
 
@@ -21,7 +22,7 @@ async function getBalanceNOT(token) {
         headers: {
             Authorization: token
         }
-    })
+    });
     return data.result.notcoin;
 }
 
@@ -33,7 +34,7 @@ async function getBalanceTON(token) {
         headers: {
             Authorization: token
         }
-    })
+    });
     return data.result.toncoin;
 }
 
@@ -45,7 +46,7 @@ async function getTickets(token) {
         headers: {
             Authorization: token
         }
-    })
+    });
     return data.result.tickets;
 }
 
@@ -58,45 +59,46 @@ async function getTypeTask(token) {
             headers: {
                 Authorization: token
             }
-        })
+        });
 
         if (Array.isArray(data.result.data)) {
             const types = data.result.data.map(item => {
                 if (!item.is_claimed) {
-                    item.is_claimed = true
+                    item.is_claimed = true;
                     if (!item.open_in_telegram) {
                         item.open_in_telegram = true;
                     }
                 }
                 return item.type; // Return only the type
-            })
+            });
 
+            console.log(chalk.green('✅ Tasks retrieved and processed successfully.'));
             return {
                 success: true,
                 types: types,
                 message: 'Tasks retrieved and processed successfully.'
-            }
+            };
         } else {
-            console.log('Data is not an Array');
+            console.log(chalk.yellow('⚠️ The data is not an array.'));
             return {
                 success: false,
                 types: [],
-                message: 'Data is not an Array or no tasks available.'
-            }
+                message: 'Data is not an array or no tasks available.'
+            };
         }
     } catch (error) {
-        console.error(`❌ Error fetching tasks: ${error.message}`.red);
+        console.error(chalk.red(`❌ Error fetching tasks: ${error.message}`));
         return {
             success: false,
             types: [],
             message: `Error fetching tasks: ${error.message}`
-        }
+        };
     }
 }
 
 // CLEAR TASKS BY TYPE
 async function clearTasks(token, types) {
-    const results = []
+    const results = [];
 
     for (const type of types) {
         try {
@@ -108,11 +110,12 @@ async function clearTasks(token, types) {
                     'Content-Type': 'application/json'
                 },
                 data: { type }
-            })
+            });
             results.push({
                 type: type,
                 result: data.result
-            })
+            });
+            console.log(chalk.green(`✅ Task of type '${type}' completed successfully.`));
         } catch (error) {
             results.push({
                 type: type,
@@ -121,7 +124,7 @@ async function clearTasks(token, types) {
         }
     }
 
-    return results
+    return results;
 }
 
 // AUTO SPIN
@@ -129,6 +132,7 @@ async function autoSpin(token) {
     try {
         let ticketsRemaining = await getTickets(token);
         let results = [];
+
         while (ticketsRemaining > 0) {
             const { data } = await axios({
                 url: `${BASE_URL}wheel/spin`,
@@ -137,8 +141,10 @@ async function autoSpin(token) {
                     Authorization: token,
                 }
             });
+
             const reward = data.result.reward;
             let rewardDescription;
+
             if (reward.startsWith('c')) {
                 const pointAmount = parseInt(reward.slice(1));
                 rewardDescription = `${pointAmount.toLocaleString()} AP`;
@@ -154,24 +160,27 @@ async function autoSpin(token) {
             } else {
                 rewardDescription = reward;
             }
+
             results.push(rewardDescription);
             ticketsRemaining--;
 
+            console.log(chalk.blue(`🎉 Reward: ${rewardDescription}. Tickets remaining: ${ticketsRemaining}.`));
+
             if (ticketsRemaining > 0) {
-                console.log(`Waiting 5 seconds before next spin. Tickets remaining: ${ticketsRemaining}`);
+                console.log(chalk.gray(`⌛ Waiting 5 seconds before the next spin...`));
                 await new Promise(resolve => setTimeout(resolve, 5 * 1000)); // 5 seconds delay
             }
         }
+
         return results;
     } catch (error) {
         if (error.response && error.response.status === 403) {
-            console.log("Your tickets are now 0.");
+            console.log(chalk.yellow('⚠️ No tickets remaining.'));
         } else {
-            throw new Error(`Error during auto spin: ${error.message}`);
+            console.error(chalk.red(`❌ Error during auto spin: ${error.message}`));
         }
     }
 }
-
 
 module.exports = {
     getBalancePoint,

@@ -5,11 +5,11 @@ function displayHeader() {
     process.stdout.write('\x1Bc') // Membersihkan layar
 
     const headerBorder = '==========================================='
-    console.log(headerBorder.brightCyan);
-    console.log('=        🚀 Agent301 Airdrop Bot 🚀       ='.brightCyan.bold)
-    console.log('=            Created by Lubitzy           ='.brightCyan)
-    console.log('=           https://t.me/lubiqt           ='.brightCyan)
-    console.log(headerBorder.brightCyan);
+    console.log(headerBorder.white);
+    console.log('=        🚀 Agent301 Airdrop Bot 🚀       ='.white.bold)
+    console.log('=            Created by Lubitzy           ='.white)
+    console.log('=           https://t.me/lubiqt           ='.white)
+    console.log(headerBorder.white);
     console.log();
 }
 
